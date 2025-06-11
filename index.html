@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" href="favicon.ico" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🤖 IA Head Hunter - Matching de CVs</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+  <style>
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .main-container {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(10px);
+    }
+
+    .card {
+      border: none;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+    }
+
+    .btn-primary {
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      border: none;
+      border-radius: 25px;
+      padding: 12px 30px;
+      font-weight: 600;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .progress {
+      height: 8px;
+      border-radius: 10px;
+    }
+
+    .table {
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .badge-excelente {
+      background-color: #28a745;
+    }
+
+    .badge-bueno {
+      background-color: #17a2b8;
+    }
+
+    .badge-regular {
+      background-color: #ffc107;
+      color: #000;
+    }
+
+    .badge-bajo {
+      background-color: #dc3545;
+    }
+
+    .upload-area {
+      border: 2px dashed #667eea;
+      border-radius: 15px;
+      padding: 40px;
+      text-align: center;
+      transition: all 0.3s ease;
+      background: rgba(102, 126, 234, 0.05);
+    }
+
+    .upload-area:hover {
+      border-color: #764ba2;
+      background: rgba(118, 75, 162, 0.1);
+    }
+
+    .upload-area.dragover {
+      border-color: #28a745;
+      background: rgba(40, 167, 69, 0.1);
+    }
+
+    .loading {
+      display: none;
+    }
+
+    .result-item {
+      transition: all 0.3s ease;
+    }
+
+    .result-item:hover {
+      background-color: rgba(102, 126, 234, 0.1);
+    }
+
+    /* Estilos para el chatbot */
+    .chatbot-container {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 1000;
+      width: 400px;
+      max-height: 600px;
+    }
+
+    .chatbot-toggle {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 1001;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      border: none;
+      color: white;
+      font-size: 24px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      transition: all 0.3s ease;
+    }
+
+    .chatbot-toggle:hover {
+      transform: scale(1.1);
+    }
+
+    .chatbot-window {
+      display: none;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+    }
+
+    .chatbot-header {
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      color: white;
+      padding: 15px 20px;
+      font-weight: 600;
+    }
+
+    .chatbot-messages {
+      height: 400px;
+      overflow-y: auto;
+      padding: 20px;
+      background: #f8f9fa;
+    }
+
+    .message {
+      margin-bottom: 15px;
+      display: flex;
+      align-items: flex-start;
+    }
+
+    .message.user {
+      justify-content: flex-end;
+    }
+
+    .message.bot {
+      justify-content: flex-start;
+    }
+
+    .message-content {
+      max-width: 80%;
+      padding: 12px 16px;
+      border-radius: 18px;
+      word-wrap: break-word;
+    }
+
+    .message.user .message-content {
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      color: white;
+    }
+
+    .message.bot .message-content {
+      background: white;
+      border: 1px solid #e9ecef;
+    }
+
+    .chatbot-input {
+      padding: 15px;
+      border-top: 1px solid #e9ecef;
+      background: white;
+    }
+
+    .chatbot-input input {
+      border: 1px solid #e9ecef;
+      border-radius: 25px;
+      padding: 10px 20px;
+    }
+
+    .chatbot-input button {
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      border: none;
+      color: white;
+    }
+
+    /* Estilos para análisis de CV */
+    .analysis-card {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border-radius: 15px;
+      padding: 20px;
+      margin: 10px 0;
+    }
+
+    .strength-item {
+      background: #d4edda;
+      color: #155724;
+      padding: 5px 10px;
+      border-radius: 15px;
+      margin: 2px;
+      display: inline-block;
+      font-size: 0.9em;
+    }
+
+    .weakness-item {
+      background: #f8d7da;
+      color: #721c24;
+      padding: 5px 10px;
+      border-radius: 15px;
+      margin: 2px;
+      display: inline-block;
+      font-size: 0.9em;
+    }
+
+    /* Tabs para diferentes funcionalidades */
+    .nav-tabs .nav-link {
+      border: none;
+      color: #6c757d;
+      font-weight: 500;
+    }
+
+    .nav-tabs .nav-link.active {
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      color: white;
+      border-radius: 25px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container py-5">
+    <div class="main-container p-5">
+      <!-- Header -->
+      <div class="text-center mb-5">
+        <h1 class="display-4 fw-bold text-primary mb-3">
+          <i class="fas fa-robot me-3"></i>IA Head Hunter
+        </h1>
+        <p class="lead text-muted">
+          Sistema de Matching de CVs con Inteligencia Artificial
+        </p>
+      </div>
+
+      <!-- Tabs de navegación -->
+      <ul class="nav nav-tabs mb-4" id="mainTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="matching-tab" data-bs-toggle="tab" data-bs-target="#matching"
+            type="button" role="tab">
+            <i class="fas fa-search me-2"></i>Matching de CVs
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="analysis-tab" data-bs-toggle="tab" data-bs-target="#analysis" type="button"
+            role="tab">
+            <i class="fas fa-chart-line me-2"></i>Análisis IA
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="chat-tab" data-bs-toggle="tab" data-bs-target="#chat" type="button" role="tab">
+            <i class="fas fa-comments me-2"></i>Asistente IA
+          </button>
+        </li>
+      </ul>
+
+      <!-- Contenido de las tabs -->
+      <div class="tab-content" id="mainTabsContent">
+        <!-- Tab de Matching -->
+        <div class="tab-pane fade show active" id="matching" role="tabpanel">
+          <!-- Upload Section -->
+          <div class="row mb-5">
+            <div class="col-md-6">
+              <div class="card h-100">
+                <div class="card-body">
+                  <h5 class="card-title">
+                    <i class="fas fa-file-excel text-success me-2"></i>Archivo
+                    de Vacantes
+                  </h5>
+                  <div class="upload-area" id="vacantesUpload">
+                    <i class="fas fa-cloud-upload-alt fa-3x text-primary mb-3"></i>
+                    <p class="mb-2">
+                      Arrastra tu archivo Excel aquí o haz clic para
+                      seleccionar
+                    </p>
+                    <input type="file" id="vacantesFile" accept=".xlsx,.xls" class="d-none" />
+                    <button class="btn btn-outline-primary" onclick="document.getElementById('vacantesFile').click()">
+                      Seleccionar Archivo
+                    </button>
+                  </div>
+                  <div id="vacantesInfo" class="mt-3 d-none">
+                    <div class="alert alert-success">
+                      <i class="fas fa-check-circle me-2"></i>
+                      <span id="vacantesName"></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="card h-100">
+                <div class="card-body">
+                  <h5 class="card-title">
+                    <i class="fas fa-file-pdf text-danger me-2"></i>CVs (PDFs)
+                  </h5>
+                  <div class="upload-area" id="cvsUpload">
+                    <i class="fas fa-cloud-upload-alt fa-3x text-primary mb-3"></i>
+                    <p class="mb-2">
+                      Arrastra tus CVs PDF aquí o haz clic para seleccionar
+                    </p>
+                    <input type="file" id="cvsFiles" accept=".pdf" multiple class="d-none" />
+                    <button class="btn btn-outline-primary" onclick="document.getElementById('cvsFiles').click()">
+                      Seleccionar CVs
+                    </button>
+                  </div>
+                  <div id="cvsInfo" class="mt-3 d-none">
+                    <div class="alert alert-info">
+                      <i class="fas fa-info-circle me-2"></i>
+                      <span id="cvsCount"></span> CVs seleccionados
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="text-center mb-5">
+            <button class="btn btn-primary btn-lg me-3" onclick="crearEjemplo()">
+              <i class="fas fa-magic me-2"></i>Crear Archivos de Ejemplo
+            </button>
+            <button class="btn btn-success btn-lg" onclick="ejecutarMatching()" id="matchBtn">
+              <i class="fas fa-play me-2"></i>Ejecutar Matching
+            </button>
+          </div>
+
+          <!-- Progress -->
+          <div class="loading" id="loadingSection">
+            <div class="card">
+              <div class="card-body text-center">
+                <div class="spinner-border text-primary mb-3" role="status">
+                  <span class="visually-hidden">Cargando...</span>
+                </div>
+                <h5>Procesando con IA...</h5>
+                <p class="text-muted">
+                  Analizando CVs y calculando similitudes
+                </p>
+                <div class="progress">
+                  <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 100%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Results -->
+          <div id="resultsSection" class="d-none">
+            <div class="card">
+              <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                  <i class="fas fa-chart-bar me-2"></i>Resultados del Matching
+                </h5>
+              </div>
+              <div class="card-body">
+                <div class="row mb-4">
+                  <div class="col-md-4">
+                    <div class="text-center">
+                      <h3 class="text-primary" id="totalCvs">0</h3>
+                      <p class="text-muted">CVs Procesados</p>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="text-center">
+                      <h3 class="text-success" id="totalVacantes">0</h3>
+                      <p class="text-muted">Vacantes Analizadas</p>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="text-center">
+                      <h3 class="text-info" id="totalMatches">0</h3>
+                      <p class="text-muted">Matches Encontrados</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="table-responsive">
+                  <table class="table table-hover">
+                    <thead class="table-dark">
+                      <tr>
+                        <th>Vacante</th>
+                        <th>CV</th>
+                        <th>Puntaje</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody id="resultsTable"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab de Análisis IA -->
+        <div class="tab-pane fade" id="analysis" role="tabpanel">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-header bg-info text-white">
+                  <h5 class="mb-0">
+                    <i class="fas fa-file-alt me-2"></i>Análisis de CV
+                  </h5>
+                </div>
+                <div class="card-body">
+                  <div class="mb-3">
+                    <label for="cvTextInput" class="form-label">Texto del CV:</label>
+                    <textarea class="form-control" id="cvTextInput" rows="10"
+                      placeholder="Pega aquí el texto del CV..."></textarea>
+                  </div>
+                  <div class="mb-3">
+                    <label for="jobRequirementsInput" class="form-label">Requisitos de la Vacante:</label>
+                    <textarea class="form-control" id="jobRequirementsInput" rows="4"
+                      placeholder="Describe los requisitos de la vacante..."></textarea>
+                  </div>
+                  <button class="btn btn-primary" onclick="analyzeCV()">
+                    <i class="fas fa-brain me-2"></i>Analizar con IA
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div id="analysisResults" class="d-none">
+                <div class="card">
+                  <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                      <i class="fas fa-chart-pie me-2"></i>Resultados del
+                      Análisis
+                    </h5>
+                  </div>
+                  <div class="card-body">
+                    <div id="analysisContent"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab de Chat -->
+        <div class="tab-pane fade" id="chat" role="tabpanel">
+          <div class="row">
+            <div class="col-md-8">
+              <div class="card">
+                <div class="card-header bg-primary text-white">
+                  <h5 class="mb-0">
+                    <i class="fas fa-robot me-2"></i>Asistente IA - Chat
+                  </h5>
+                </div>
+                <div class="card-body">
+                  <div id="chatMessages" style="
+                        height: 400px;
+                        overflow-y: auto;
+                        padding: 15px;
+                        background: #f8f9fa;
+                        border-radius: 10px;
+                        margin-bottom: 15px;
+                      ">
+                    <div class="message bot">
+                      <div class="message-content">
+                        ¡Hola! Soy tu asistente de IA especializado en
+                        recursos humanos. Puedo ayudarte a evaluar CVs,
+                        comparar candidatos, generar preguntas de entrevista y
+                        mucho más. ¿En qué puedo ayudarte hoy?
+                      </div>
+                    </div>
+                  </div>
+                  <div class="input-group">
+                    <input type="text" class="form-control" id="chatInput" placeholder="Escribe tu mensaje..."
+                      onkeypress="handleChatKeyPress(event)" />
+                    <button class="btn btn-primary" onclick="sendChatMessage()">
+                      <i class="fas fa-paper-plane"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card">
+                <div class="card-header bg-secondary text-white">
+                  <h5 class="mb-0">
+                    <i class="fas fa-lightbulb me-2"></i>Sugerencias
+                  </h5>
+                </div>
+                <div class="card-body">
+                  <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary btn-sm"
+                      onclick="sendSuggestion('¿Cómo evalúo la experiencia técnica de un candidato?')">
+                      Evaluar experiencia técnica
+                    </button>
+                    <button class="btn btn-outline-primary btn-sm"
+                      onclick="sendSuggestion('¿Qué preguntas debo hacer en una entrevista?')">
+                      Preguntas de entrevista
+                    </button>
+                    <button class="btn btn-outline-primary btn-sm"
+                      onclick="sendSuggestion('¿Cómo comparo múltiples candidatos?')">
+                      Comparar candidatos
+                    </button>
+                    <button class="btn btn-outline-primary btn-sm"
+                      onclick="sendSuggestion('¿Qué aspectos son más importantes en un CV?')">
+                      Aspectos importantes del CV
+                    </button>
+                    <button class="btn btn-outline-primary btn-sm"
+                      onclick="sendSuggestion('¿Cómo identifico red flags en un CV?')">
+                      Identificar red flags
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Variables globales
+    let vacantesFile = null;
+    let cvsFiles = [];
+    let chatHistory = [];
+
+    // Configurar drag and drop
+    setupDragAndDrop();
+
+    function setupDragAndDrop() {
+      const vacantesUpload = document.getElementById("vacantesUpload");
+      const cvsUpload = document.getElementById("cvsUpload");
+
+      // Vacantes
+      vacantesUpload.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        vacantesUpload.classList.add("dragover");
+      });
+
+      vacantesUpload.addEventListener("dragleave", () => {
+        vacantesUpload.classList.remove("dragover");
+      });
+
+      vacantesUpload.addEventListener("drop", (e) => {
+        e.preventDefault();
+        vacantesUpload.classList.remove("dragover");
+        const files = e.dataTransfer.files;
+        if (files.length > 0 && files[0].name.match(/\.(xlsx|xls)$/i)) {
+          handleVacantesFile(files[0]);
+        }
+      });
+
+      // CVs
+      cvsUpload.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        cvsUpload.classList.add("dragover");
+      });
+
+      cvsUpload.addEventListener("dragleave", () => {
+        cvsUpload.classList.remove("dragover");
+      });
+
+      cvsUpload.addEventListener("drop", (e) => {
+        e.preventDefault();
+        cvsUpload.classList.remove("dragover");
+        const files = Array.from(e.dataTransfer.files).filter((f) =>
+          f.name.match(/\.pdf$/i)
+        );
+        handleCvsFiles(files);
+      });
+    }
+
+    // Manejar archivo de vacantes
+    document
+      .getElementById("vacantesFile")
+      .addEventListener("change", (e) => {
+        if (e.target.files.length > 0) {
+          handleVacantesFile(e.target.files[0]);
+        }
+      });
+
+    function handleVacantesFile(file) {
+      vacantesFile = file;
+      document.getElementById("vacantesName").textContent = file.name;
+      document.getElementById("vacantesInfo").classList.remove("d-none");
+    }
+
+    // Manejar archivos de CVs
+    document.getElementById("cvsFiles").addEventListener("change", (e) => {
+      if (e.target.files.length > 0) {
+        handleCvsFiles(Array.from(e.target.files));
+      }
+    });
+
+    function handleCvsFiles(files) {
+      cvsFiles = files.filter((f) => f.name.match(/\.pdf$/i));
+      document.getElementById("cvsCount").textContent = cvsFiles.length;
+      document.getElementById("cvsInfo").classList.remove("d-none");
+    }
+
+    // Crear archivos de ejemplo
+    async function crearEjemplo() {
+      try {
+        const response = await fetch("/api/ejemplo", {
+          method: "POST",
+        });
+        const data = await response.json();
+
+        if (data.success) {
+          alert("Archivos de ejemplo creados exitosamente");
+        } else {
+          alert("Error: " + data.error);
+        }
+      } catch (error) {
+        alert("Error al crear archivos de ejemplo: " + error.message);
+      }
+    }
+
+    // Ejecutar matching
+    async function ejecutarMatching() {
+      if (!vacantesFile) {
+        alert("Por favor selecciona un archivo de vacantes");
+        return;
+      }
+
+      if (cvsFiles.length === 0) {
+        alert("Por favor selecciona al menos un CV");
+        return;
+      }
+
+      // Mostrar loading
+      document.getElementById("loadingSection").classList.remove("d-none");
+      document.getElementById("resultsSection").classList.add("d-none");
+      document.getElementById("matchBtn").disabled = true;
+
+      try {
+        const formData = new FormData();
+        formData.append("vacantes", vacantesFile);
+
+        cvsFiles.forEach((file) => {
+          formData.append("cvs", file);
+        });
+
+        const response = await fetch("/api/match", {
+          method: "POST",
+          body: formData,
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          mostrarResultados(data);
+        } else {
+          alert("Error: " + data.error);
+        }
+      } catch (error) {
+        alert("Error al procesar: " + error.message);
+      } finally {
+        document.getElementById("loadingSection").classList.add("d-none");
+        document.getElementById("matchBtn").disabled = false;
+      }
+    }
+
+    // Mostrar resultados
+    function mostrarResultados(data) {
+      document.getElementById("totalCvs").textContent = data.total_cvs;
+      document.getElementById("totalVacantes").textContent =
+        data.total_vacantes;
+      document.getElementById("totalMatches").textContent =
+        data.resultados.length;
+
+      const tbody = document.getElementById("resultsTable");
+      tbody.innerHTML = "";
+
+      data.resultados.forEach((resultado) => {
+        const row = document.createElement("tr");
+        row.className = "result-item";
+
+        const estadoClass = `badge-${resultado.estado.toLowerCase()}`;
+
+        row.innerHTML = `
+                    <td><strong>${resultado.vacante_titulo}</strong></td>
+                    <td>${resultado.cv_nombre}</td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="progress me-2" style="width: 100px; height: 8px;">
+                                <div class="progress-bar" style="width: ${resultado.puntaje}%"></div>
+                            </div>
+                            <span class="fw-bold">${resultado.puntaje}%</span>
+                        </div>
+                    </td>
+                    <td><span class="badge ${estadoClass}">${resultado.estado}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="analyzeSpecificCV('${resultado.cv_nombre}', ${resultado.puntaje})">
+                            <i class="fas fa-brain"></i> Analizar
+                        </button>
+                    </td>
+                `;
+
+        tbody.appendChild(row);
+      });
+
+      document.getElementById("resultsSection").classList.remove("d-none");
+    }
+
+    // Funciones del chatbot
+    function sendChatMessage() {
+      const input = document.getElementById("chatInput");
+      const message = input.value.trim();
+
+      if (message) {
+        addMessageToChat("user", message);
+        input.value = "";
+
+        // Enviar mensaje al servidor
+        sendMessageToAI(message);
+      }
+    }
+
+    function handleChatKeyPress(event) {
+      if (event.key === "Enter") {
+        sendChatMessage();
+      }
+    }
+
+    function addMessageToChat(sender, message) {
+      const chatMessages = document.getElementById("chatMessages");
+      const messageDiv = document.createElement("div");
+      messageDiv.className = `message ${sender}`;
+
+      messageDiv.innerHTML = `
+                    <div class="message-content">
+                        ${message}
+                    </div>
+                `;
+
+      chatMessages.appendChild(messageDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    async function sendMessageToAI(message) {
+      try {
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            message: message,
+            context: {},
+          }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          addMessageToChat("bot", data.response);
+        } else {
+          addMessageToChat(
+            "bot",
+            "Lo siento, hubo un error al procesar tu mensaje."
+          );
+        }
+      } catch (error) {
+        addMessageToChat(
+          "bot",
+          "Error de conexión. Por favor, intenta de nuevo."
+        );
+      }
+    }
+
+    function sendSuggestion(suggestion) {
+      document.getElementById("chatInput").value = suggestion;
+      sendChatMessage();
+    }
+
+    // Funciones de análisis de CV
+    async function analyzeCV() {
+      const cvText = document.getElementById("cvTextInput").value.trim();
+      const jobRequirements = document
+        .getElementById("jobRequirementsInput")
+        .value.trim();
+
+      if (!cvText) {
+        alert("Por favor ingresa el texto del CV");
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/analyze-cv", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            cv_text: cvText,
+            job_requirements: jobRequirements,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          displayAnalysisResults(data.analysis);
+        } else {
+          alert("Error: " + data.error);
+        }
+      } catch (error) {
+        alert("Error al analizar CV: " + error.message);
+      }
+    }
+
+    function displayAnalysisResults(analysis) {
+      const container = document.getElementById("analysisContent");
+
+      container.innerHTML = `
+                    <div class="analysis-card">
+                        <h6><i class="fas fa-user me-2"></i>Resumen</h6>
+                        <p>${analysis.resumen}</p>
+                    </div>
+                    
+                    <div class="analysis-card">
+                        <h6><i class="fas fa-thumbs-up me-2"></i>Fortalezas</h6>
+                        <div>
+                            ${analysis.fortalezas
+          .map(
+            (f) => `<span class="strength-item">${f}</span>`
+          )
+          .join("")}
+                        </div>
+                    </div>
+                    
+                    <div class="analysis-card">
+                        <h6><i class="fas fa-exclamation-triangle me-2"></i>Áreas de Mejora</h6>
+                        <div>
+                            ${analysis.areas_mejora
+          .map(
+            (a) => `<span class="weakness-item">${a}</span>`
+          )
+          .join("")}
+                        </div>
+                    </div>
+                    
+                    <div class="analysis-card">
+                        <h6><i class="fas fa-chart-bar me-2"></i>Evaluación</h6>
+                        <p><strong>Experiencia relevante:</strong> ${analysis.experiencia_relevante
+        }</p>
+                        <p><strong>Habilidades técnicas:</strong> ${analysis.habilidades_tecnicas.join(
+          ", "
+        )}</p>
+                        <p><strong>Compatibilidad:</strong> ${analysis.compatibilidad_vacante
+        }%</p>
+                        <p><strong>Recomendación:</strong> <span class="badge bg-primary">${analysis.recomendacion
+        }</span></p>
+                    </div>
+                    
+                    <div class="analysis-card">
+                        <h6><i class="fas fa-question-circle me-2"></i>Preguntas Sugeridas para Entrevista</h6>
+                        <ul>
+                            ${analysis.preguntas_entrevista
+          .map((p) => `<li>${p}</li>`)
+          .join("")}
+                        </ul>
+                    </div>
+                    
+                    <div class="analysis-card">
+                        <h6><i class="fas fa-comment me-2"></i>Observaciones</h6>
+                        <p>${analysis.observaciones}</p>
+                    </div>
+                `;
+
+      document.getElementById("analysisResults").classList.remove("d-none");
+    }
+
+    function analyzeSpecificCV(cvName, score) {
+      // Cambiar a la pestaña de análisis
+      document.getElementById("analysis-tab").click();
+
+      // Mostrar mensaje en el chat
+      const message = `¿Puedes analizar el CV "${cvName}" que tiene un puntaje de ${score}%?`;
+      sendSuggestion(message);
+    }
+  </script>
+</body>
+
+</html>
